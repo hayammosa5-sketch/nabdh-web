@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نبض Nabdh – جرّب أولي</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#F6EEDA;--card:#FFFDF7;--ink:#3E3A34;--soft:#6B6458;--line:#EFE3C7;--sky:#4FA8C4;--leaf:#5F8250;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14202B;--card:#1C2B38;--ink:#F1EBDD;--soft:#A9B4BC;--line:#2A3B4A;--sky:#7EC8DE;--leaf:#9DBD8C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14202B;--card:#1C2B38;--ink:#F1EBDD;--soft:#A9B4BC;--line:#2A3B4A;--sky:#7EC8DE;--leaf:#9DBD8C;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh;display:flex;justify-content:center}
+main{width:100%;max-width:440px;padding:20px 16px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+h1{margin:0;font-size:26px}h1 span{color:var(--sky)}
+.sub{margin:0;color:var(--soft);font-size:14px}
+#stage{height:230px;display:flex;align-items:center;justify-content:center}
+#chip{padding:6px 14px;border-radius:20px;font-weight:700;font-size:13px;background:var(--card);border:1px solid var(--line)}
+textarea{width:100%;min-height:90px;border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;font-size:16px;background:var(--card);color:var(--ink);resize:vertical}
+.row{display:flex;gap:8px;width:100%}
+button,.btn{font:inherit;font-weight:700;border:none;border-radius:14px;padding:12px 14px;cursor:pointer;text-decoration:none}
+#speak{flex:1;background:var(--sky);color:#fff;font-size:16px}
+#stop{background:#D2703A;color:#fff;display:none}
+.ex{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.ex button{background:var(--card);color:var(--ink);border:1px solid var(--line);font-size:13px;padding:7px 12px;border-radius:18px}
+#note{font-size:12.5px;color:var(--soft);min-height:18px}
+.fb{display:block;width:100%;background:var(--leaf);color:#fff;font-size:15px}
+.ask{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;font-size:13.5px;line-height:1.7;width:100%}
+.aura{transition:filter .3s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes stomp{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+@keyframes sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(-10deg)}}
+@keyframes nod{0%,100%{transform:rotate(0)}50%{transform:rotate(3deg)}}
+</style>
+</head>
+<body>
+<main>
+<h1>نبض <span>Nabdh</span></h1>
+<p class="sub">رسائل تتكلم بإحساس · Messages that speak with feeling</p>
+<div id="stage"></div>
+<div id="chip">🙂 اكتب رسالة وشاهد أولي يتفاعل</div>
+<textarea id="t" placeholder="اكتب رسالتك بالعربية أو English..." dir="auto"></textarea>
+<div class="ex">
+<button data-t="وصلت البيت أخيراً، اليوم كان حلو 🌾">😊 فرح</button>
+<button data-t="تعبت نفسياً، اليوم كان صعب">😔 حزن</button>
+<button data-t="أنا غاضب جداً، هذا مستفز!">😠 غضب</button>
+<button data-t="This is amazing, I love it!">🤩 English</button>
+</div>
+<div class="row"><button id="speak">🔊 دع أولي يتكلم</button><button id="stop">⏹</button></div>
+<div id="note"></div>
+<div class="ask"><b>ساعدنا بسؤال واحد:</b><br>لو وصلتك رسالة مهمة، هل تفضّل أن تقرأها نصاً أم أن يقولها لك أولي بصوته وبتعابيره؟</div>
+<a class="btn fb" id="fb" href="#" target="_blank" rel="noopener">💬 شاركنا رأيك</a>
+</main>
+<script>
+// ضعي هنا رابط نموذج Google Form الخاص بك لجمع الآراء
+var FEEDBACK_URL = "";
+var M={happy:{h:"#7C9B6C",e:-7.5,m:6,l:1.5,a:"سعيد",j:"🙂"},calm:{h:"#7EC8DE",e:-5,m:4,l:0,a:"هادئ",j:"😌"},excited:{h:"#E8935C",e:-9,m:7,l:3,a:"متحمس",j:"🤩"},sad:{h:"#B9A6D1",e:5,m:-5,l:-1.5,a:"حزين",j:"😔"},angry:{h:"#D2703A",e:2,m:-6,l:-2.5,a:"غاضب",j:"😠"}};
+var K={angry:["غاضب","عصبي","مستفز","طفشان","😠","😡","angry","furious","annoyed","hate"],sad:["حزين","زعلان","تعبان","تعبت","متضايق","وحيد","آسف","😢","💔","sad","tired","lonely","sorry","upset"],excited:["!","يجنن","رهيب","حماس","واو","🔥","😍","amazing","awesome","wow","love"],happy:["حلو","سعيد","فرحان","الحمدلله","😊","🌾","happy","glad","good","great","thanks"]};
+function mood(t){t=(t||"").toLowerCase();if(!t.trim())return"calm";for(var k of["angry","sad","excited","happy"])if(K[k].some(function(w){return t.includes(w)}))return k;return"calm"}
+var mouth=.2,speaking=false,cur="calm";
+function face(md){var s=M[md],a=md==="angry",h=s.h,l=s.l;
+var arm=function(x,r,cx,cy){return '<rect x="'+x+'" y="76" width="13" height="40" rx="6.5" fill="url(#g)" transform="rotate('+r+' '+(x+6.5)+' 96)"/><circle cx="'+cx+'" cy="'+cy+'" r="8.5" fill="#2A2A2E"/>'};
+return '<svg viewBox="0 0 100 155" width="150" height="232" class="aura" style="filter:drop-shadow(0 0 14px '+h+'88)"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBC56B"/><stop offset="1" stop-color="#F5A83C"/></linearGradient></defs>'
++'<g id="body" style="animation:'+(speaking?"bob .55s ease-in-out infinite":"none")+'">'
++arm(13,a?50:-7,a?46:18,a?88:115)+arm(74,a?-50:7,a?54:82,a?88:115)
++'<rect x="30" y="118" width="16" height="30" rx="6" fill="url(#g)"/><ellipse cx="38" cy="150" rx="11" ry="6" fill="#E8935C"/>'
++'<g style="transform-box:fill-box;animation:'+(a?"stomp .5s ease-in-out infinite":"none")+'"><rect x="54" y="118" width="16" height="30" rx="6" fill="url(#g)"/><ellipse cx="62" cy="150" rx="11" ry="6" fill="#E8935C"/></g>'
++'<rect x="24" y="70" width="52" height="52" rx="22" fill="url(#g)"/>'
++'<g style="transform-box:fill-box;transform-origin:50% 100%;animation:'+(md==="sad"?"sway 1.8s ease-in-out infinite":md==="happy"?"nod .9s ease-in-out infinite":"none")+'">'
++'<line x1="50" y1="18" x2="'+(md==="sad"?46:50)+'" y2="'+(md==="sad"?9:6)+'" stroke="#8a7a60" stroke-width="2.2" stroke-linecap="round"/><circle cx="'+(md==="sad"?46:50)+'" cy="'+(md==="sad"?9:6)+'" r="4" fill="'+h+'"/>'
++'<rect x="8" y="38" width="12" height="24" rx="6" fill="#C7D3D6"/><rect x="80" y="38" width="12" height="24" rx="6" fill="#C7D3D6"/>'
++'<rect x="17" y="17" width="66" height="60" rx="24" fill="url(#g)"/><rect x="27" y="30" width="46" height="36" rx="14" fill="#181A1F"/>'
++'<path d="M34 '+(46-l)+' q6.5 '+s.e+' 13 0" stroke="'+h+'" stroke-width="3.6" stroke-linecap="round" fill="none"/><path d="M53 '+(46-l)+' q6.5 '+s.e+' 13 0" stroke="'+h+'" stroke-width="3.6" stroke-linecap="round" fill="none"/>'
++'<path id="idle" d="M41 59 q9 '+s.m+' 18 0" stroke="#EAF9FB" stroke-width="2.8" stroke-linecap="round" fill="none"/>'
++'<ellipse id="mo" cx="50" cy="59" rx="'+(md==="excited"?10:8)+'" ry="0" fill="#0B0C10"/></g></g></svg>'}
+var stage=document.getElementById("stage"),chip=document.getElementById("chip"),T=document.getElementById("t"),note=document.getElementById("note");
+function render(){var m=mood(T.value);cur=m;stage.innerHTML=face(m);var s=M[m];chip.textContent=s.j+" تم رصد المزاج تلقائياً: "+s.a;chip.style.color=s.h==="#7EC8DE"?"var(--sky)":""}
+T.addEventListener("input",render);
+document.querySelectorAll(".ex button").forEach(function(b){b.onclick=function(){T.value=b.dataset.t;render();go()}});
+var tt=0;(function loop(){tt+=.18;var mo=document.getElementById("mo"),id=document.getElementById("idle");
+if(mo){var v=speaking?.25+(Math.abs(Math.sin(tt*2.3))*.7+Math.abs(Math.sin(tt*5.1))*.3)*.75:0;mo.setAttribute("ry",v*8);if(id)id.style.opacity=speaking?0:1}requestAnimationFrame(loop)})();
+function setSpeaking(v){speaking=v;document.getElementById("stop").style.display=v?"block":"none";render()}
+function go(){var msg=T.value.trim();if(!msg){note.textContent="اكتب رسالة أولاً ✍️";return}note.textContent="";
+var ar=/[\u0600-\u06FF]/.test(msg);setSpeaking(true);var ms=Math.min(7000,Math.max(1500,msg.length*75)),fb=setTimeout(function(){setSpeaking(false)},ms);
+if(!("speechSynthesis" in window)){note.textContent="متصفحك لا يدعم الصوت، لكن أولي يعبّر بوجهه 🙂";return}
+function run(){speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(msg),want=ar?"ar":"en",vs=speechSynthesis.getVoices(),v=vs.find(function(x){return x.lang&&x.lang.toLowerCase().startsWith(want)});
+if(v){u.voice=v;u.lang=v.lang}else{u.lang=ar?"ar-SA":"en-US";if(ar)note.textContent="جهازك لا يحتوي صوتاً عربياً، جرّب متصفحاً آخر أو English 🔈"}
+u.onstart=function(){clearTimeout(fb);setSpeaking(true)};u.onend=function(){clearTimeout(fb);setSpeaking(false)};u.onerror=function(){clearTimeout(fb);setSpeaking(false)};speechSynthesis.speak(u)}
+if(speechSynthesis.getVoices().length===0){speechSynthesis.onvoiceschanged=function(){speechSynthesis.onvoiceschanged=null;run()};setTimeout(function(){if(!speechSynthesis.speaking)run()},700)}else run()}
+document.getElementById("speak").onclick=go;
+document.getElementById("stop").onclick=function(){try{speechSynthesis.cancel()}catch(e){}setSpeaking(false)};
+var fb=document.getElementById("fb");if(FEEDBACK_URL)fb.href=FEEDBACK_URL;else fb.onclick=function(e){e.preventDefault();note.textContent="سيُضاف رابط الآراء قريباً 💚"};
+render();
+</script>
+</body>
+</html>
